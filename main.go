@@ -37,10 +37,18 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "创建新的文章")
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Fprint(w, "请提供正确的数据")
+		return
+	}
+	title := r.PostForm.Get("title")
+	fmt.Fprintf(w, "POST PostForm: %v <br>", r.PostForm)
+	fmt.Fprintf(w, "POST Form: %v <br>", r.Form)
+	fmt.Fprintf(w, "title 的值为: %v", title)
 }
 
-func articleCreateHandler(w http.ResponseWriter, r *http.Request) {
+func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 	html := `
 <!DOCTYPE html>
 <html lang="en">
@@ -48,7 +56,7 @@ func articleCreateHandler(w http.ResponseWriter, r *http.Request) {
     <title>创建文章 —— 我的技术博客</title>
 </head>
 <body>
-    <form action="%s" method="post">
+    <form action="%s?test=data" method="post">
         <p><input type="text" name="title"></p>
         <p><textarea name="body" cols="30" rows="10"></textarea></p>
         <p><button type="submit">提交</button></p>
@@ -57,7 +65,7 @@ func articleCreateHandler(w http.ResponseWriter, r *http.Request) {
 </html>
 `
 	storeURL, _ := router.Get("articles.store").URL()
-	fmt.Fprint(w, html, storeURL)
+	fmt.Fprintf(w, html, storeURL)
 }
 
 //设置中间件
@@ -89,7 +97,7 @@ func main() {
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
 
-	router.HandleFunc("/articles/create", articleCreateHandler).Methods("GET").Name("articles.create")
+	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
 
 	// 自定义 404 页面
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
