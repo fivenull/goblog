@@ -3,8 +3,6 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
-	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"net/http"
@@ -13,6 +11,9 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
+
+	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 )
 
 var router = mux.NewRouter()
@@ -72,6 +73,16 @@ type Article struct {
 	ID          int64
 }
 
+// Link 方法用来生成文章链接
+func (a Article) Link() string {
+	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
+	if err != nil {
+		checkError(err)
+		return ""
+	}
+	return showURL.String()
+}
+
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取 URL 参数
 	id := getRouteVariable("id", r)
@@ -100,7 +111,32 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "访问文章列表")
+	// 1. 执行查询语句，返回一个结果集
+	rows, err := db.Query("select * from articles")
+	checkError(err)
+	defer rows.Close()
+
+	var articles []Article
+	//2. 循环读取结果
+	for rows.Next() {
+		var article Article
+		// 2.1 扫描每一行的结果并赋值到一个 article 对象中
+		err := rows.Scan(&article.ID, &article.Title, &article.Body)
+		checkError(err)
+		// 2.2 将 article 追加到 articles 的这个数组中
+		articles = append(articles, article)
+	}
+	// 2.3 检测遍历时是否发生错误
+	err = rows.Err()
+	checkError(err)
+
+	// 3. 加载模板
+	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
+	checkError(err)
+
+	// 4. 渲染模板，将所有文章的数据传输进去
+	err = tmpl.Execute(w, articles)
+	checkError(err)
 }
 
 type ArticlesFormData struct {
@@ -291,6 +327,8 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			// 4.2 表单验证通过，更新数据
 			query := "UPDATE articles SET title = ?, body = ? WHERE id = ?"
 			rs, err := db.Exec(query, title, body, id)
+			fmt.Println("db属性")
+			fmt.Printf("%T", rs)
 			if err != nil {
 				checkError(err)
 				w.WriteHeader(http.StatusInternalServerError)

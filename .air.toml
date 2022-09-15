@@ -1,0 +1,3 @@
+[build]
+
+exclude_dir = [".get", "tmp", "vendor", "frontend/node_modules"]
