@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,7 +11,9 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"goblog/pkg/logger"
 	"goblog/pkg/route"
+	"goblog/pkg/types"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -44,12 +45,6 @@ func initDB() {
 	// 尝试连接，失败会报错
 	err = db.Ping()
 	logger.LogError(err)
-}
-
-func logger.LogError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -121,17 +116,12 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.New("show.gohtml").
 			Funcs(template.FuncMap{
 				"RouteName2URL": route.Name2URL,
-				"Int64ToString": Int64ToString,
+				"Int64ToString": types.Int64ToString,
 			}).ParseFiles("resources/views/articles/show.gohtml")
 		logger.LogError(err)
 		err = tmpl.Execute(w, article)
 		logger.LogError(err)
 	}
-}
-
-// Int64ToString 将 int64 转换为 string
-func Int64ToString(num int64) string {
-	return strconv.FormatInt(num, 10)
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
