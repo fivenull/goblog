@@ -167,8 +167,6 @@ func main() {
 	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
-	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")
-
 	// 中间件 强制内容类型为 HTML
 	router.Use(forceHTMLMiddleware)
 
