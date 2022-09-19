@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"goblog/pkg/logger"
 
 	"gorm.io/gorm"
@@ -18,10 +19,11 @@ func ConnectDB() *gorm.DB {
 	var err error
 
 	config := mysql.New(mysql.Config{
-		DSN: "root:secret@tcp(127.0.0.1:3306)/goblog?charset=utf8&parseTime=True&loc=Local",
+		DSN: "root:secret@tcp(10.13.0.252:3306)/goblog?charset=utf8&parseTime=True&loc=Local",
 	})
 
 	// 准备数据库连接池
+	fmt.Println(*config)
 	DB, err = gorm.Open(config, &gorm.Config{})
 
 	logger.LogError(err)

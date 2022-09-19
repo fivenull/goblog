@@ -90,8 +90,8 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 		// tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
 		tmpl, err := template.New("show.gohtml").
 			Funcs(template.FuncMap{
-				"RouteName2URL": route.Name2URL,
-				"Int64ToString": types.Int64ToString,
+				"RouteName2URL":  route.Name2URL,
+				"Uint64ToString": types.Int64ToString,
 			}).ParseFiles("resources/views/articles/show.gohtml")
 		logger.LogError(err)
 		err = tmpl.Execute(w, article)
@@ -412,6 +412,7 @@ func main() {
 	database.Initialize()
 	db = database.DB
 
+	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
