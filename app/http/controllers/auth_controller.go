@@ -7,6 +7,13 @@ import (
 	"net/http"
 )
 
+type userForm struct {
+	Name            string `valid:"name"`
+	Email           string `valid:"email"`
+	Password        string `valid:"password"`
+	PasswordConfirm string `valid:"password_confirm"`
+}
+
 // AuthController 处理用户认证
 type AuthController struct {
 }
