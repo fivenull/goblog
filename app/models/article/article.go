@@ -1,7 +1,7 @@
 package article
 
 import (
-	"goblog/app/http/models"
+	"goblog/app/models"
 	"goblog/pkg/route"
 	"strconv"
 )

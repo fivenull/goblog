@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"goblog/app/http/models/article"
+	"goblog/app/models/article"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
 	"goblog/pkg/view"
@@ -152,10 +152,10 @@ func (*ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 		//	Errors:  nil,
 		//}, "articles.edit", "articles._form_field")
 		view.Render(w, view.D{
-			"Title":   _article.Title,
-			"Body":    _article.Body,
-			"Article": _article,
-			"Errors":  nil,
+			"Title": _article.Title,
+			//"Body":    _article.Body,
+			//"Article": _article,
+			//"Errors":  nil,
 		}, "articles.edit", "articles._form_field")
 	}
 }
