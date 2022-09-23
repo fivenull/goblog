@@ -3,12 +3,18 @@ package controllers
 import (
 	"fmt"
 	"goblog/app/models/article"
+	"goblog/app/models/category"
 	"goblog/app/policies"
 	"goblog/app/requests"
 	"goblog/pkg/auth"
+	"goblog/pkg/flash"
+	"goblog/pkg/logger"
 	"goblog/pkg/route"
+	"goblog/pkg/types"
 	"goblog/pkg/view"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
 // ArticlesController 处理静态页面
@@ -57,7 +63,20 @@ func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 
 // Create 文章创建页面
 func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
-	view.Render(w, view.D{}, "articles.create", "articles._form_field")
+	categories, err := category.All()
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			flash.Warning("请先创建分类")
+			http.Redirect(w, r, "/", http.StatusFound)
+		} else {
+			logger.LogError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
+	}
+	view.Render(w, view.D{
+		"Categories": categories,
+	}, "articles.create", "articles._form_field")
 }
 
 // Store 文章创建页面
@@ -65,9 +84,10 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 	// 1. 初始化数据
 	currentUser := auth.User()
 	_article := article.Article{
-		Title:  r.PostFormValue("title"),
-		Body:   r.PostFormValue("body"),
-		UserID: currentUser.ID,
+		Title:      r.PostFormValue("title"),
+		Body:       r.PostFormValue("body"),
+		CategoryID: types.StringToUint64(r.PostFormValue("category_id")),
+		UserID:     currentUser.ID,
 	}
 
 	// 2. 表单验证
@@ -105,6 +125,17 @@ func (ac *ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		ac.ResponseForSQLError(w, err)
 	} else {
+		categories, err := category.All()
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				flash.Warning("请先创建分类")
+				http.Redirect(w, r, "/", http.StatusFound)
+			} else {
+				logger.LogError(err)
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprint(w, "500 服务器内部错误")
+			}
+		}
 
 		// 检查权限
 		if !policies.CanModifyArticle(_article) {
@@ -112,8 +143,9 @@ func (ac *ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// 4. 读取成功，显示编辑文章表单
 			view.Render(w, view.D{
-				"Article": _article,
-				"Errors":  view.D{},
+				"Article":    _article,
+				"Errors":     view.D{},
+				"Categories": categories,
 			}, "articles.edit", "articles._form_field")
 		}
 	}
@@ -142,6 +174,7 @@ func (ac *ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 			// 4.1 表单验证
 			_article.Title = r.PostFormValue("title")
 			_article.Body = r.PostFormValue("body")
+			_article.CategoryID = types.StringToUint64(r.PostFormValue("category_id"))
 
 			errors := requests.ValidateArticleForm(_article)
 
