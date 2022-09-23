@@ -1,19 +1,20 @@
 package main
 
 import (
-	"database/sql"
+	"embed"
 	"goblog/app/http/middlewares"
 	"goblog/bootstrap"
 	"goblog/config"
 	c "goblog/pkg/config"
-	"goblog/pkg/database"
+	"goblog/pkg/logger"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
-var router *mux.Router
-var db *sql.DB
+//go:embed resources/views/articles/*
+//go:embed resources/views/auth/*
+//go:embed resources/views/categories/*
+//go:embed resources/views/layouts/*
+var tplFS embed.FS
 
 func init() {
 	// 初始化配置信息
@@ -21,11 +22,13 @@ func init() {
 }
 
 func main() {
-	database.Initialize()
-	db = database.DB
-
+	// 初始化 SQL
 	bootstrap.SetupDB()
-	router = bootstrap.SetupRoute()
+
+	// 初始化模板
+	bootstrap.SetupTemplate(tplFS)
+	// 初始化路由绑定
+	router := bootstrap.SetupRoute()
 
 	// 通过命名路由获取 URL 示例
 	//homeURL, _ := router.Get("home").URL()
@@ -33,5 +36,6 @@ func main() {
 	//articleURL, _ := router.Get("articles.show").URL("id", "23")
 	//fmt.Println("articleURL: ", articleURL)
 
-	http.ListenAndServe(":"+c.GetString("app.port"), middlewares.RemoveTrailingSlash(router))
+	err := http.ListenAndServe(":"+c.GetString("app.port"), middlewares.RemoveTrailingSlash(router))
+	logger.LogError(err)
 }
